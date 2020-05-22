@@ -2,8 +2,7 @@
 #include "languageProcess.h"
 #include <fstream>
 #include <regex>
-#include <codecvt>
-#include <iostream>
+#include "MyFile.h"
 
 languageProcess::languageProcess()
 {
@@ -20,68 +19,102 @@ languageProcess::languageProcess(const string strDictionaryPath)
 }
 
 
-bool languageProcess::SentenceSegment(string strSentence, string& strProcessed)
+bool languageProcess::SentenceSegment(wstring strSentence, wstring& strProcessed)
 {
 	if (strSentence.empty())
 	{
 		return false;
 	}
 
-	map<int, string> mapProccessed;
+	map<int, MYWORD> mapProccessed;
 
 	//提取电话号码
-	string str = strSentence;
-	string strPhoneNo;
-	smatch result;
-	regex celPattern("[1]+[3,8]+\\d{9}");
-	string::const_iterator iter = strSentence.cbegin();
-	string::const_iterator iter_end = strSentence.cend();
-	while (regex_search(iter, iter_end, result, celPattern))
-	{
-		strPhoneNo += result[0];
-		iter = result[0].second;
-		str.replace(str.find_first_of(result[0]), result[0].length(), "");
-	}
-
-	strSentence = str;
+	wstring strPhoneNo = ExtractPhoneNo(strSentence);
 
 	//从词典中查取词性
-	map<string, string>::iterator it = m_mapDictonary.begin();
+	map<wstring, wstring>::iterator it = m_mapDictonary.begin();
 	while (it != m_mapDictonary.end())
 	{
-		string strWord = it->first;
-		string strProperty = it->second;
+		wstring strWord = it->first;
+		wstring strProperty = it->second;
 
 		int iPos = strSentence.find(strWord);
 		if (iPos >= 0)
 		{
-			mapProccessed.insert(make_pair(iPos,strWord + strProperty));
+			MYWORD Word;
+			Word.word = strWord;
+			Word.property = strProperty;
+			mapProccessed.insert(make_pair(iPos, Word));
 		}
 
 		it++;
 	}
 
-	//排序输出
+	//按照原语序排序输出
 	int iCurrentPos = 0;
-	map<int, string>::iterator it1 = mapProccessed.begin();
+	map<int, MYWORD>::iterator it1 = mapProccessed.begin();
 	while (it1 != mapProccessed.end())
 	{
 		int iPos = it1->first;
-		string strWord = it1->second;
+		MYWORD  Word = it1->second;
+
+		if (!strProcessed.empty())
+		{
+			strProcessed += L"\t";
+		}
 
 		if (iPos > iCurrentPos)
 		{
-			strProcessed += "\t" + strSentence.substr(iCurrentPos, iCurrentPos - iPos) + "\\ unknown";
+			strProcessed += strSentence.substr(iCurrentPos, iPos - iCurrentPos) + UnKnown;
+			strProcessed += L"\t" + Word.word + Word.property;
+			iCurrentPos = iPos + Word.word.length();
 		}
 		else
 		{
-			strProcessed += "\t" + strWord;
+			strProcessed +=  Word.word + Word.property;
+			iCurrentPos += Word.word.length();
 		}
-		strProcessed += "\t" + strPhoneNo + "\\ PNo";
 		it1++;
+	}
+	strProcessed += L"\t" + strSentence.substr(iCurrentPos, strSentence.length() - iCurrentPos - 1) + UnKnown;
+	if (!strPhoneNo.empty())
+	{
+		strProcessed += L"\t" + strPhoneNo + PhoneNo;
 	}
 	
 	return true;
+}
+
+wstring languageProcess::ExtractPhoneNo(wstring& strLine)
+{
+	wstring str = strLine;
+	wstring strPhoneNo;
+	wsmatch result;
+	wregex celPattern(L"[1]+[3,8]+\\d{9}");
+	wstring::const_iterator iter = strLine.cbegin();
+	wstring::const_iterator iter_end = strLine.cend();
+	while (regex_search(iter, iter_end, result, celPattern))
+	{
+		if (!strPhoneNo.empty())
+		{
+			strPhoneNo += L"/";
+		}
+
+		strPhoneNo += result[0];
+		iter = result[0].second;
+		str.erase(str.find_first_of(result[0]), result[0].length());
+	}
+
+	strLine = str;
+	return strPhoneNo;
+}
+
+wstring languageProcess::ExtractDate(wstring& strLine)
+{
+	wstring strDate;
+	//提取日期
+	//TODO
+	return strDate;
 }
 
 bool languageProcess::LoadDictionary(string strDictionaryPath)
@@ -101,8 +134,9 @@ bool languageProcess::LoadDictionary(string strDictionaryPath)
 		int iPos = strLine.find("\t");
 		if (iPos > 0)
 		{
-			string strKey = strLine.substr(0,iPos);
-			string strVale = strLine.substr(iPos + 1, strLine.size() - iPos -1);
+			MyFile myFile;
+			wstring strKey = myFile.UTF8ToUnicode(strLine.substr(0,iPos));
+			wstring strVale = myFile.UTF8ToUnicode(strLine.substr(iPos + 1, strLine.size() - iPos -2));
 			m_mapDictonary.insert(make_pair(strKey,strVale));
 		}
 	}
@@ -110,15 +144,3 @@ bool languageProcess::LoadDictionary(string strDictionaryPath)
 	return true;
 }
 
-wstring UTF8ToUnicode(const string & str)
-{
-	wstring ret;
-	try {
-		wstring_convert< codecvt_utf8<wchar_t> > wcv;
-		ret = wcv.from_bytes(str);
-	}
-	catch (const exception & e) {
-		cerr << e.what() << std::endl;
-	}
-	return ret;
-}

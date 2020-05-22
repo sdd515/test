@@ -7,13 +7,9 @@
 
 int main()
 {
-	string str = "今天去哈哈哈";
-	int i = str.find("去");
-
-	UNICODE;
-	string strResult;
+	wstring strResult;
 	languageProcess Message(".//data//dictionary.txt");
-	Message.SentenceSegment("today今天长沙去深圳 18275668536 ,18275668537", strResult);
+	Message.SentenceSegment(L"今天长沙去深圳 18275668536 ,18275668537", strResult);
     return 0;
 }
 

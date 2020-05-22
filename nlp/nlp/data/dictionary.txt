@@ -23,5 +23,18 @@
 有车去	\ p4v
 的车吗	\ p4v
 求车	\ p4v
-today	\ p4v
+去	\ to
+回	\ to
+到	\ to
+下	\ to
+出	\ to
+上	\ to
+往	\ to
+翻	\ to
+落	\ to
+直达	\ to
+-	\ to
+个	\ num
+位	\ num
+人	\ num
 
