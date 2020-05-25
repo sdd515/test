@@ -9,7 +9,7 @@ int main()
 {
 	wstring strResult;
 	languageProcess Message(".//data//dictionary.txt");
-	Message.SentenceSegment(L"今天长沙去深圳 18275668536 ,18275668537", strResult);
+	Message.SentenceSegment(L"今天 12月3号 长沙去深圳 18275668536 ,18275668537", strResult);
     return 0;
 }
 
