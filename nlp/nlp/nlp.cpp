@@ -7,9 +7,9 @@
 
 int main()
 {
-	wstring strResult;
+	Infomations info;
 	languageProcess Message(".//data//dictionary.txt");
-	Message.SentenceSegment(L"今天 12月3号 长沙去深圳 18275668536 ,18275668537", strResult);
+	Message.SentenceSegment(L"类型人找车时5月6日上午9点至10点起点深圳坪洲地铁站终点东莞常平君临酒店人数1人电话13691646535 自带口罩，无发热，无咳嗽。", info);
     return 0;
 }
 
